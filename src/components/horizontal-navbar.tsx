@@ -1,3 +1,4 @@
+'use client';
 import {
   FileText,
   Plus,
@@ -18,7 +19,10 @@ import {
   HelpCircle,
   MessageSquare,
 } from 'lucide-react';
+import { useCurrentProperty } from '@/hooks/use-current-property';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -38,6 +42,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTheme } from 'next-themes';
+import { useCurrentUser } from '@/hooks/use-current-user';
+import { getMemberships } from '@/lib/api/property';
+import { EdwixButton } from './edwix-button';
+import { cn } from '@/lib/utils';
 
 interface MenuItem {
   value: string;
@@ -94,7 +102,7 @@ const MainMenuSelect = ({
             {menuItems.map((item: MenuItem) => (
               <SelectItem key={item.value} value={item.value}>
                 <div className="flex items-center">
-                  <item.icon className="mr-2 h-4 w-4" />
+                  <item.icon className="mr-2 h-4 w-4 text-inherit" />
                   {item.label}
                 </div>
               </SelectItem>
@@ -106,14 +114,14 @@ const MainMenuSelect = ({
   );
 };
 
-const AddButton = () => {
+const AddButton = ({ theme }: { theme: string | undefined }) => {
   return (
     <button className="bg-[#2CAACE] text-black border-2 border-black rounded-full font-semibold justify-center filter drop-shadow-[-4px_4px_0px_rgba(0,0,0,1)] text-sm py-1 px-3 h-8 flex items-center">
       <span
         className="bg-black rounded-full p-1 mr-2 flex items-center justify-center"
         style={{ width: '20px', height: '20px' }}
       >
-        <Plus className="h-3 w-3 text-white" />
+        <Plus className={`h-3 w-3 ${theme === 'dark' ? 'text-white' : 'text-black'}`} />
       </span>
       Add...
     </button>
@@ -127,31 +135,86 @@ const SearchButton = ({ theme }: { theme: string | undefined }) => {
         theme === 'dark' ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-700'
       }`}
     >
-      <Search className="h-5 w-5" />
+      <Search className="h-5 w-5 text-inherit" />
     </button>
   );
 };
 
 const PropertySelect = ({ theme }: { theme: string | undefined }) => {
+  const router = useRouter();
+  const user = useCurrentUser();
+  const { currentProperty, setCurrentProperty } = useCurrentProperty();
+  const { data: memberships, isLoading } = useQuery({
+    queryKey: ['memberships', user?.data?.id],
+    queryFn: () => {
+      if (!user?.data?.id) {
+        throw new Error('User ID is required');
+      }
+      return getMemberships(user.data.id);
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="w-[150px] h-10 rounded-full animate-pulse bg-gray-200 dark:bg-gray-700" />
+    );
+  }
+
+  if (!memberships) {
+    return null;
+  }
+
   return (
-    <Select>
+    <Select
+      value={currentProperty?.id}
+      onValueChange={value => {
+        if (value === 'new') {
+          router.push('/properties/new');
+          return;
+        }
+        const property = memberships.find(m => m.property_id === value)?.Property;
+        if (property) {
+          setCurrentProperty({
+            id: property.id,
+            name: property.name || '',
+          });
+        }
+      }}
+    >
       <SelectTrigger
-        className={`rounded-full  w-[150px] ${theme === 'dark' ? 'bg-gray-800 text-white' : ''}`}
+        className={`rounded-full w-[150px] ${theme === 'dark' ? 'bg-gray-800 text-white' : ''}`}
       >
-        <Home className="mr-2 h-4 w-4" />
-        <SelectValue placeholder="LaKaz" />
+        <Home className="mr-2 h-6 w-6 text-inherit" />
+        <SelectValue placeholder={currentProperty?.name || memberships[0]?.Property?.name} />
       </SelectTrigger>
       <SelectContent className={theme === 'dark' ? 'bg-gray-800 text-white' : ''}>
         <SelectGroup>
-          <SelectLabel>Properties</SelectLabel>
-          <SelectItem value="lakaz">LaKaz</SelectItem>
-          <SelectItem value="office">Office</SelectItem>
+          <SelectLabel>Personal Properties</SelectLabel>
+          {memberships
+            .filter(m => m.role === 'owner')
+            .map(membership => (
+              <SelectItem key={membership.property_id} value={membership.property_id}>
+                {membership.Property.name}
+              </SelectItem>
+            ))}
         </SelectGroup>
-        <SelectSeparator />
-        <SelectGroup>
-          <SelectLabel>Personal</SelectLabel>
-          <SelectItem value="home">Home</SelectItem>
-        </SelectGroup>
+
+        {memberships.some(m => m.role === 'owner') && memberships.some(m => m.role !== 'owner') && (
+          <SelectSeparator />
+        )}
+        {memberships.some(m => m.role !== 'owner') && (
+          <SelectGroup>
+            <SelectLabel>Member</SelectLabel>
+            {memberships
+              .filter(m => m.role !== 'owner')
+              .map(membership => (
+                <SelectItem key={membership.property_id} value={membership.property_id}>
+                  {membership.Property.name}
+                </SelectItem>
+              ))}
+          </SelectGroup>
+        )}
+
         <SelectSeparator />
         <SelectItem value="new">Add New Property</SelectItem>
       </SelectContent>
@@ -162,15 +225,11 @@ const NotificationsSelect = ({ theme }: { theme: string | undefined }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={`flex border shadow-none border-gray-200 items-center justify-center text-sm font-medium w-10 relative rounded-full p-1 ${
-          theme === 'dark' ? 'bg-gray-800' : ''
+        className={`flex items-center justify-center text-sm font-medium w-10 relative rounded-full p-1 ${
+          theme === 'dark' ? 'bg-gray-800 text-white ' : 'text-gray-700 border '
         }`}
       >
-        <Bell
-          className={`h boder-none shadow-none w-5 ${
-            theme === 'dark' ? 'text-white' : 'text-gray-700'
-          }`}
-        />
+        <Bell className="h-6 w-6  dark:text-white text-gray-800" />
         <span className="absolute -top-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full bg-red-500 text-xs text-white font-medium bg-red ring-red dark:ring-gray-800">
           2
         </span>
@@ -232,9 +291,11 @@ const UserMenuSelect = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={`rounded-full w-[40px] p-0 border-0 ${theme === 'dark' ? 'bg-gray-800' : ''}`}
+        className={`flex items-center justify-center text-sm font-medium h-9 w-10 relative rounded-full p-1 ${
+          theme === 'dark' ? 'bg-gray-800 text-white ' : 'text-gray-700 border '
+        }`}
       >
-        <User className={`h-5 w-5 ${theme === 'dark' ? 'text-white' : 'text-gray-700'}`} />
+        <User className="h-5 w-5 dark:text-white text-gray-800" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className={`w-56 ${theme === 'dark' ? 'bg-gray-800 text-white' : ''}`}>
         <div className="px-2 py-1.5 text-sm font-normal">
@@ -253,7 +314,7 @@ const UserMenuSelect = ({
         {userMenuItems.mainItems.map((item: MenuItem) => (
           <DropdownMenuItem key={item.value} asChild>
             <Link href={item.href || ''} className="flex items-center">
-              <item.icon className="mr-2 h-4 w-4" />
+              <item.icon className="mr-2 h-4 w-4 text-inherit" />
               {item.label}
             </Link>
           </DropdownMenuItem>
@@ -262,7 +323,7 @@ const UserMenuSelect = ({
         {userMenuItems.settingsItems.map((item: MenuItem) => (
           <DropdownMenuItem key={item.value} asChild>
             <Link href={item.href || ''} className="flex items-center">
-              <item.icon className="mr-2 h-4 w-4" />
+              <item.icon className="mr-2 h-4 w-4 text-inherit" />
               {item.label}
             </Link>
           </DropdownMenuItem>
@@ -271,7 +332,7 @@ const UserMenuSelect = ({
         {userMenuItems.supportItems.map((item: MenuItem) => (
           <DropdownMenuItem key={item.value} asChild>
             <Link href={item.href || ''} className="flex items-center">
-              <item.icon className="mr-2 h-4 w-4" />
+              <item.icon className="mr-2 h-4 w-4 text-inherit" />
               {item.label}
             </Link>
           </DropdownMenuItem>
@@ -279,7 +340,7 @@ const UserMenuSelect = ({
         <DropdownMenuSeparator className="-mx-1 my-1 h-px bg-gray-200" />
         <DropdownMenuItem>
           <div className="flex items-center">
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="mr-2 h-4 w-4 text-inherit" />
             Log out
           </div>
         </DropdownMenuItem>
@@ -323,15 +384,24 @@ const Navbar = () => {
   console.log(theme);
   return (
     <div className="  z-50 top-0 w-full sticky">
-      <nav className={`bg-background w-full`}>
+      <nav className={` w-full bg-sidebar`}>
         <div className="px-8 h-16 flex items-center">
           <LogoSection />
           {/* <MainMenuSelect theme={theme} menuItems={menuItems} /> */}
 
           <div className="flex-grow"></div>
           <div className="flex items-center space-x-4">
-            <AddButton />
-            <SearchButton theme={theme} />
+            <EdwixButton className=" w-fit bg-[#2caace] hover:bg-[#157FC2] transition">
+              <span className="flex items-center font-semibold">
+                UPLOAD DOCUMENT
+                <span className="ml-2 bg-black rounded-full w-6 h-6 flex items-center justify-center">
+                  <Plus className="h-6 w-6 text-white" />
+                </span>
+              </span>
+            </EdwixButton>
+
+            {/* <SearchButton theme={theme} /> */}
+
             <PropertySelect theme={theme} />
             <NotificationsSelect theme={theme} />
             <UserMenuSelect theme={theme} userMenuItems={userMenuItems} />

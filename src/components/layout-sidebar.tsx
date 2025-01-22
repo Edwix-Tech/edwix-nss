@@ -2,7 +2,6 @@ import { cn } from '@/lib/utils';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import MainSidebar from './main-sidebar';
-import Navbar from './horizontal-navbar';
 
 export default function LayoutSidebar({
   children,

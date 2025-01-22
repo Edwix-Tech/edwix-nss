@@ -44,8 +44,6 @@ import { usePathname } from 'next/navigation';
 import { ForwardRefExoticComponent, RefAttributes, useState } from 'react';
 import { SettingsModal } from '@/components/settings-modal';
 import { useTranslations } from 'next-intl';
-import Navbar from './horizontal-navbar';
-import { PropertySelect } from '@/components/property-select';
 
 // Workspace items
 const workspaceItems: Array<{
@@ -157,9 +155,6 @@ export default function MainSidebar() {
             <Image src="/images/logo.svg" alt={t('common.logo')} width={130} height={100} />
           </div>
         </SidebarHeader>
-
-        <PropertySelect />
-
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
