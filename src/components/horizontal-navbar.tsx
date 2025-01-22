@@ -19,6 +19,7 @@ import {
   HelpCircle,
   MessageSquare,
 } from 'lucide-react';
+import supabaseClient from '@/lib/supabase-client';
 import { useCurrentProperty } from '@/hooks/use-current-property';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -45,7 +46,6 @@ import { useTheme } from 'next-themes';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getMemberships } from '@/lib/api/property';
 import { EdwixButton } from './edwix-button';
-import { cn } from '@/lib/utils';
 
 interface MenuItem {
   value: string;
@@ -189,7 +189,7 @@ const PropertySelect = ({ theme }: { theme: string | undefined }) => {
       </SelectTrigger>
       <SelectContent className={theme === 'dark' ? 'bg-gray-800 text-white' : ''}>
         <SelectGroup>
-          <SelectLabel>Personal Properties</SelectLabel>
+          <SelectLabel>Owner</SelectLabel>
           {memberships
             .filter(m => m.role === 'owner')
             .map(membership => (
@@ -288,6 +288,15 @@ const UserMenuSelect = ({
   theme: string | undefined;
   userMenuItems: UserMenuItem;
 }) => {
+  const _logout = async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+      alert(error.message);
+    }
+
+    window.location.reload();
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -338,7 +347,7 @@ const UserMenuSelect = ({
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator className="-mx-1 my-1 h-px bg-gray-200" />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={_logout}>
           <div className="flex items-center">
             <LogOut className="mr-2 h-4 w-4 text-inherit" />
             Log out
@@ -359,11 +368,12 @@ const Navbar = () => {
     { value: 'calendar', label: 'Calendar', icon: Calendar },
     { value: 'finance', label: 'Finance', icon: DollarSign },
   ];
+  const user = useCurrentUser();
 
   const userMenuItems = {
     profile: {
-      name: 'Olivier',
-      email: 'olivier@example.com',
+      name: '',
+      email: user.data?.email || '',
     },
     mainItems: [
       { value: 'connectors', label: 'Connectors', icon: LinkIcon, href: '/connectors' },
