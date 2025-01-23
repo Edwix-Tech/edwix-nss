@@ -11,7 +11,6 @@ import {
   CheckSquare,
   Calendar,
   DollarSign,
-  Bell,
   LogOut,
   Link as LinkIcon,
   Mail,
