@@ -369,10 +369,10 @@ const Navbar = () => {
     { value: 'finance', label: 'Finance', icon: DollarSign },
   ];
   const user = useCurrentUser();
-
+  console.log(user.data?.profile.firstname);
   const userMenuItems = {
     profile: {
-      name: '',
+      name: user.data?.profile.firstname || '',
       email: user.data?.email || '',
     },
     mainItems: [
@@ -381,7 +381,7 @@ const Navbar = () => {
       { value: 'properties', label: 'Properties', icon: Home, href: '/properties' },
     ],
     settingsItems: [
-      { value: 'profile', label: 'Profile', icon: User, href: '/parameters/profile' },
+      { value: 'profile', label: 'Profile', icon: User, href: '/v2' },
       { value: 'billing', label: 'Billing', icon: CreditCard, href: '/billing' },
     ],
     supportItems: [
