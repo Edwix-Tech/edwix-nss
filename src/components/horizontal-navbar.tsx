@@ -396,9 +396,6 @@ const Navbar = () => {
   console.log(theme);
 
   // Create refs for file inputs
-  const withAiInputRef = React.useRef<HTMLInputElement>(null);
-  const withoutAiInputRef = React.useRef<HTMLInputElement>(null);
-
   const handleFileUpload = async (files: FileList | null, withAi: boolean) => {
     try {
       if (!files || files.length === 0) {
@@ -442,45 +439,30 @@ const Navbar = () => {
                 className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} -p-1 border-2 border-black rounded-xl shadow-[-5px_5px_0px_0px_rgba(0,0,0,1)]`}
                 align="end"
               >
-                <input
-                  type="file"
-                  ref={withAiInputRef}
-                  style={{ display: 'none' }}
-                  accept=".pdf,.doc,.docx"
-                  onChange={e => {
-                    try {
-                      handleFileUpload(e.target.files, true);
-                      e.target.value = ''; // Reset input after upload
-                      alert('File uploaded successfully with AI!');
-                    } catch (error) {
-                      console.error('Error uploading with AI:', error);
-                      alert('Error uploading file. Please try again.');
-                    }
-                  }}
-                />
-                <input
-                  type="file"
-                  ref={withoutAiInputRef}
-                  style={{ display: 'none' }}
-                  accept=".pdf,.doc,.docx"
-                  onChange={e => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      try {
-                        handleFileUpload(e.target.files, false);
-                        e.target.value = ''; // Reset input after upload
-                        alert('File uploaded successfully without AI!');
-                      } catch (error) {
-                        console.error('Error uploading without AI:', error);
-                        alert('Error uploading file. Please try again.');
+                <DropdownMenuItem
+                  className="flex items-center cursor-pointer py-4 hover:bg-[#28A0C2] focus:bg-[#28A0C2]"
+                  onClick={() => {
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = '.pdf,.doc,.docx';
+                    fileInput.onchange = e => {
+                      const files = (e.target as HTMLInputElement).files;
+                      if (files && files.length > 0) {
+                        handleFileUpload(files, true);
                       }
-                    }
+                    };
+                    fileInput.click();
                   }}
-                />
-                <DropdownMenuItem className="flex items-center cursor-pointer py-4 hover:bg-[#28A0C2] focus:bg-[#28A0C2]">
+                >
                   <div className="flex items-center space-x-2">
                     <div className="bg-black rounded-full p-2">
                       <Wand2 className="h-4 w-4 text-white" />
                     </div>
+                    <span
+                      className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'}`}
+                    >
+                      Upload with AI
+                    </span>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -492,10 +474,7 @@ const Navbar = () => {
                     fileInput.onchange = e => {
                       const files = (e.target as HTMLInputElement).files;
                       if (files && files.length > 0) {
-                        mutation.mutate({
-                          file: files[0],
-                          aiSource: false,
-                        });
+                        handleFileUpload(files, false);
                       }
                     };
                     fileInput.click();
