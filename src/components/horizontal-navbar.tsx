@@ -411,8 +411,10 @@ const Navbar = () => {
           {sidebarAd && (
             <div className="relative h-8 w-32">
               <Link href={sidebarAd.href} target="_blank" rel="noopener noreferrer nofollow">
-                <img
+                <Image
                   src={sidebarAd.image_url}
+                  width={300}
+                  height={300}
                   alt="Sidebar Advertisement"
                   className=" h-8 w-12       "
                 />
