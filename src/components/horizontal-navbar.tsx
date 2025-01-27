@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import supabaseClient from '@/lib/supabase-client';
-import { useUploadFileWithAiSource } from '@/lib/api/upload-file';
+import { uploadFileWithAiSource } from '@/lib/api/upload-file';
 import { useCurrentProperty } from '@/hooks/use-current-property';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -394,8 +394,6 @@ const Navbar = () => {
   };
   const { theme } = useTheme();
   console.log(theme);
-
-  // Create refs for file inputs
   const handleFileUpload = async (files: FileList | null, withAi: boolean) => {
     try {
       if (!files || files.length === 0) {
@@ -407,10 +405,12 @@ const Navbar = () => {
         throw new Error('Invalid file');
       }
 
-      await mutation.mutateAsync({
+      const filePath = await uploadFileWithAiSource({
         file: file,
         aiSource: withAi,
       });
+
+      console.log('Upload successful:', filePath);
     } catch (error) {
       console.error('Upload error:', error);
       throw error;
