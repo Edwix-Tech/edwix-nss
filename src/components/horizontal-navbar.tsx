@@ -18,6 +18,7 @@ import {
   CreditCard,
   HelpCircle,
   MessageSquare,
+  Sidebar,
 } from 'lucide-react';
 import supabaseClient from '@/lib/supabase-client';
 import { useCurrentProperty } from '@/hooks/use-current-property';
@@ -46,7 +47,7 @@ import { useTheme } from 'next-themes';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getMemberships } from '@/lib/api/property';
 import { EdwixButton } from './edwix-button';
-
+import { GetAdsByPartnerId, useGetAdsByPartnerId, Ad } from '@/lib/api/ads';
 interface MenuItem {
   value: string;
   label: string;
@@ -369,7 +370,16 @@ const Navbar = () => {
     { value: 'finance', label: 'Finance', icon: DollarSign },
   ];
   const user = useCurrentUser();
-  console.log(user.data?.partner_id);
+  const ads = useGetAdsByPartnerId(user.data?.partner_id);
+  let sidebarAd: string | undefined;
+  if (!ads.isPending && ads.data) {
+    for (let i = 0; i < ads.data?.length; i++) {
+      if (ads.data[i].placement === 'SIDEBAR') {
+        sidebarAd = ads.data[i].image_url;
+        break;
+      }
+    }
+  }
 
   const userMenuItems = {
     profile: {
@@ -398,7 +408,11 @@ const Navbar = () => {
       <nav className={` w-full bg-sidebar`}>
         <div className="px-8 h-16 flex items-center">
           <LogoSection />
-          <LogoSection />
+          {sidebarAd && (
+            <div className="relative h-8 w-32">
+              <img src={sidebarAd} alt="Sidebar Advertisement" className=" h-8 w-12       " />
+            </div>
+          )}
 
           {/* <MainMenuSelect theme={theme} menuItems={menuItems} /> */}
 
