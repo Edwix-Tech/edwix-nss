@@ -369,7 +369,8 @@ const Navbar = () => {
     { value: 'finance', label: 'Finance', icon: DollarSign },
   ];
   const user = useCurrentUser();
-  console.log(user.data?.profile.firstname);
+  console.log(user.data?.partner_id);
+
   const userMenuItems = {
     profile: {
       name: user.data?.profile.firstname || '',
@@ -397,6 +398,8 @@ const Navbar = () => {
       <nav className={` w-full bg-sidebar`}>
         <div className="px-8 h-16 flex items-center">
           <LogoSection />
+          <LogoSection />
+
           {/* <MainMenuSelect theme={theme} menuItems={menuItems} /> */}
 
           <div className="flex-grow"></div>

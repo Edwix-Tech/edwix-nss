@@ -11,12 +11,11 @@ export function useCurrentUser() {
       .select('*')
       .eq('id', data.user.id)
       .single();
-
     if (error) throw error;
     if (!userData) throw new Error('User data not found');
-
     return {
       ...data.user,
+      partner_id: userData.partner_id,
       profile: {
         firstname: userData.firstname,
         lastname: userData.lastname,
