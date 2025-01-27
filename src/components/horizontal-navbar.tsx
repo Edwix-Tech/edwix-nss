@@ -371,11 +371,11 @@ const Navbar = () => {
   ];
   const user = useCurrentUser();
   const ads = useGetAdsByPartnerId(user.data?.partner_id);
-  let sidebarAd: string | undefined;
+  let sidebarAd: Ad | undefined = undefined;
   if (!ads.isPending && ads.data) {
     for (let i = 0; i < ads.data?.length; i++) {
       if (ads.data[i].placement === 'SIDEBAR') {
-        sidebarAd = ads.data[i].image_url;
+        sidebarAd = ads.data[i];
         break;
       }
     }
@@ -410,7 +410,13 @@ const Navbar = () => {
           <LogoSection />
           {sidebarAd && (
             <div className="relative h-8 w-32">
-              <img src={sidebarAd} alt="Sidebar Advertisement" className=" h-8 w-12       " />
+              <Link href={sidebarAd.href} target="_blank" rel="noopener noreferrer nofollow">
+                <img
+                  src={sidebarAd.image_url}
+                  alt="Sidebar Advertisement"
+                  className=" h-8 w-12       "
+                />
+              </Link>
             </div>
           )}
 
