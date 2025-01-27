@@ -361,7 +361,6 @@ const UserMenuSelect = ({
 };
 
 const Navbar = () => {
-  const mutation = useUploadFileWithAiSource();
   const menuItems = [
     { value: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { value: 'extractor', label: 'Extractor', icon: Wand2 },
@@ -393,7 +392,7 @@ const Navbar = () => {
     ],
   };
   const { theme } = useTheme();
-  console.log(theme);
+  const property = useCurrentProperty();
   const handleFileUpload = async (files: FileList | null, withAi: boolean) => {
     try {
       if (!files || files.length === 0) {
@@ -408,6 +407,7 @@ const Navbar = () => {
       const filePath = await uploadFileWithAiSource({
         file: file,
         aiSource: withAi,
+        currentProperty: property,
       });
 
       console.log('Upload successful:', filePath);
