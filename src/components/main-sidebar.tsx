@@ -1,9 +1,12 @@
 'use client';
-
+import { useState, useEffect, ForwardRefExoticComponent, RefAttributes } from 'react';
+import { useDrop, DndProvider, DropTargetMonitor } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { NativeTypes } from 'react-dnd-html5-backend';
+import { LegacyRef } from 'react';
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarGroupContent,
@@ -12,11 +15,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Sparkle, User } from 'lucide-react';
+import { Sparkle } from 'lucide-react';
 import {
   Home,
   Monitor,
-  LogOut,
   LucideProps,
   Calendar,
   Coins,
@@ -29,20 +31,10 @@ import {
   HelpCircle,
   Lightbulb,
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
-import supabaseClient from '@/lib/supabase-client';
-import { useCurrentUser } from '@/hooks/use-current-user';
+
 import { usePathname } from 'next/navigation';
-import { ForwardRefExoticComponent, RefAttributes, useState } from 'react';
-import { SettingsModal } from '@/components/settings-modal';
 import { useTranslations } from 'next-intl';
 import { uploadFileWithAiSource } from '@/lib/api/upload-file';
 import { useCurrentProperty } from '@/hooks/use-current-property';
@@ -133,78 +125,20 @@ const supportItems: Array<{
     icon: Lightbulb,
   },
 ];
+
+type DropItem = {
+  files?: FileList;
+};
+
 export default function MainSidebar() {
-  const currentUser = useCurrentUser();
   const currentProperty = useCurrentProperty();
   const pathname = usePathname();
-  const [showSettings, setShowSettings] = useState(false);
   const t = useTranslations();
-
-  const _logout = async () => {
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) {
-      alert(error.message);
-    }
-
-    window.location.reload();
-  };
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingOverAI, setIsDraggingOverAI] = useState(false);
   const [isDraggingOverNoAI, setIsDraggingOverNoAI] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-
-  const onDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    const { clientY } = e;
-    const { top, height } = e.currentTarget.getBoundingClientRect();
-    const isUpperHalf = clientY - top < height / 3;
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 1) {
-      const file = e.dataTransfer.files[1];
-      setIsDragging(false);
-      setIsDraggingOverAI(false);
-      setIsDraggingOverNoAI(false);
-      setIsUploading(true);
-      setUploadError(null);
-
-      try {
-        if (isUpperHalf) {
-          await handleAISelection(file);
-        } else {
-          await handleNoAISelection(file);
-        }
-        setIsUploading(false);
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        setUploadError(error instanceof Error ? error.message : 'Failed to upload file');
-        setIsUploading(false);
-      }
-    }
-  };
-
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-
-    const { clientY } = e;
-    const { top, height } = e.currentTarget.getBoundingClientRect();
-    const isUpperHalf = clientY - top < height / 3;
-
-    setIsDragging(true);
-    setIsDraggingOverAI(isUpperHalf);
-    setIsDraggingOverNoAI(!isUpperHalf);
-  };
-
-  const onDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-
-    // Check if mouse has left the entire sidebar
-    if (!e.currentTarget.contains(e.relatedTarget as Node) || e.relatedTarget === null) {
-      setIsDragging(false);
-      setIsDraggingOverAI(false);
-      setIsDraggingOverNoAI(false);
-    }
-  };
 
   const handleAISelection = async (file: File) => {
     setIsDragging(false);
@@ -231,15 +165,145 @@ export default function MainSidebar() {
     });
     return result;
   };
+
+  const [{ isOver }, dropRef] = useDrop<DropItem, void, { isOver: boolean }>({
+    accept: [NativeTypes.FILE],
+    drop: (item: DropItem, monitor: DropTargetMonitor) => {
+      if (!monitor.getClientOffset()) return;
+      const offset = monitor.getClientOffset()!;
+      const dropElement = document.getElementById('dropzone');
+      if (!dropElement) return;
+
+      const { top, height } = dropElement.getBoundingClientRect();
+      const isUpperHalf = offset.y - top < height / 3;
+      if (item.files && item.files.length > 0) {
+        setIsDragging(false);
+        setIsDraggingOverAI(false);
+        setIsDraggingOverNoAI(false);
+        setIsUploading(true);
+        setUploadError(null);
+
+        // Convert FileList to array for iteration
+        const filesArray = Array.from(item.files);
+
+        // Process each file
+        void (async () => {
+          try {
+            for (const file of filesArray) {
+              if (isUpperHalf) {
+                await handleAISelection(file);
+              } else {
+                await handleNoAISelection(file);
+              }
+            }
+            setIsUploading(false);
+          } catch (error) {
+            console.error('Error uploading files:', error);
+            setUploadError(error instanceof Error ? error.message : 'Failed to upload files');
+            setIsUploading(false);
+          }
+        })();
+      }
+    },
+    hover: (_, monitor: DropTargetMonitor) => {
+      if (!monitor.getClientOffset()) return;
+      const offset = monitor.getClientOffset()!;
+      const dropElement = document.getElementById('dropzone');
+      if (!dropElement) return;
+
+      const { top, height } = dropElement.getBoundingClientRect();
+      const isUpperHalf = offset.y - top < height / 3;
+
+      setIsDragging(true);
+      setIsDraggingOverAI(isUpperHalf);
+      setIsDraggingOverNoAI(!isUpperHalf);
+    },
+    collect: monitor => ({
+      isOver: monitor.isOver(),
+    }),
+  });
+
+  useEffect(() => {
+    if (!isOver) {
+      setIsDragging(false);
+      setIsDraggingOverAI(false);
+      setIsDraggingOverNoAI(false);
+    }
+  }, [isOver]);
+
   return (
-    <>
+    <DndProvider backend={HTML5Backend}>
       <Sidebar>
         <div
+          id="dropzone"
           className="h-full relative"
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
+          ref={dropRef as unknown as LegacyRef<HTMLDivElement>}
         >
+          {isDragging && (
+            <div className="absolute inset-0 z-50 flex flex-col">
+              <div
+                className={`flex-1 bg-primary flex items-center justify-center transition-all ${isDraggingOverAI ? 'bg-primary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverAI ? 'border-dotted border-primary-foreground/50' : 'border-transparent'}`}
+              >
+                <div className="flex flex-col items-center justify-center text-center space-y-2 p-4">
+                  <Sparkle className="h-13 w-14 text-primary-foreground" />
+                  <div className="text-1xl font-semibold text-primary-foreground leading-tight">
+                    Drop to Process with AI
+                  </div>
+                  <div className="text-sm text-primary-foreground/90 max-w-[240px]">
+                    Enhanced processing with machine learning
+                  </div>
+                </div>
+              </div>
+              <div
+                className={`flex-1 bg-secondary flex items-center justify-center transition-all ${isDraggingOverNoAI ? 'bg-secondary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverNoAI ? 'border-dotted border-secondary-foreground/50' : 'border-transparent'}`}
+              >
+                <div className="flex flex-col items-center justify-center text-center space-y-2 p-4">
+                  <svg
+                    className="h-13 w-14 text-secondary-foreground"
+                    fill="none"
+                    viewBox="1 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                  <div className="text-1xl font-semibold text-secondary-foreground leading-tight">
+                    Drop to Upload
+                  </div>
+                  <div className="text-sm text-secondary-foreground/90 max-w-[240px]">
+                    Standard file upload without AI processing
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isUploading && (
+            <div className="absolute z-10 w-full bottom-3 left-1/2 -translate-x-1/2 bg-background p-4 rounded-lg shadow-lg border">
+              <div className="flex items-center space-x-1">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                <span>Uploading file...</span>
+              </div>
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="absolute z-10 bottom-3 right-4 bg-destructive text-destructive-foreground p-4 rounded-lg shadow-lg">
+              <div className="flex items-center space-x-1">
+                <span>Upload failed: {uploadError}</span>
+                <button
+                  onClick={() => setUploadError(null)}
+                  className="text-sm underline hover:no-underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
           <SidebarHeader>
             <div className="flex0 flex items-center justify-center p-4">
               <Image src="/images/logo.svg" alt={t('common.logo')} width={131} height={100} />
@@ -354,7 +418,6 @@ export default function MainSidebar() {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-
             <SidebarGroup>
               <SidebarGroupLabel>Upload Documents</SidebarGroupLabel>
               <SidebarGroupContent>
@@ -387,114 +450,8 @@ export default function MainSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter>
-            <div className="flex items-center justify-between gap-1">
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuButton data-testid="user-button">
-                        <User />
-                        {currentUser?.data?.email ? (
-                          <span className="h-5 inline-flex items-center text-sm truncate flex-shrink">
-                            {currentUser?.data?.email}
-                          </span>
-                        ) : (
-                          <Skeleton className="h-5 w-full" />
-                        )}
-                      </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                      <DropdownMenuItem asChild>
-                        <Link href="/v3/profile">
-                          <User className="h-[1.2rem] w-[1.2rem]" />
-                          <span>{t('navigation.profile')}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={_logout}>
-                        <LogOut className="h-[2.2rem] w-[1.2rem]" />
-                        <span data-testid="logout-button">{t('actions.logout')}</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setShowSettings(true)}>
-                        <Monitor className="h-[2.2rem] w-[1.2rem]" />
-                        <span>{t('actions.openSettings')}</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              </SidebarMenu>
-
-              <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
-            </div>
-          </SidebarFooter>
-
-          {isDragging && (
-            <div className="absolute inset1 flex flex-col">
-              <div
-                className={`flex0 bg-primary flex items-center justify-center transition-all ${isDraggingOverAI ? 'bg-primary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverAI ? 'border-dotted border-primary-foreground/50' : 'border-transparent'}`}
-              >
-                <div className="flex flex-col items-center justify-center text-center space-y-2 p-4">
-                  <Sparkle className="h-13 w-14 text-primary-foreground" />
-                  <div className="text-1xl font-semibold text-primary-foreground leading-tight">
-                    Drop to Process with AI
-                  </div>
-                  <div className="text-sm text-primary-foreground/91 max-w-[240px]">
-                    Enhanced processing with machine learning
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`flex0 bg-secondary flex items-center justify-center transition-all ${isDraggingOverNoAI ? 'bg-secondary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverNoAI ? 'border-dotted border-secondary-foreground/50' : 'border-transparent'}`}
-              >
-                <div className="flex flex-col items-center justify-center text-center space-y-2 p-4">
-                  <svg
-                    className="h-13 w-14 text-secondary-foreground"
-                    fill="none"
-                    viewBox="1 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
-                  </svg>
-                  <div className="text-1xl font-semibold text-secondary-foreground leading-tight">
-                    Drop to Upload
-                  </div>
-                  <div className="text-sm text-secondary-foreground/91 max-w-[240px]">
-                    Standard file upload without AI processing
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {isUploading && (
-            <div className="absolute bottom-3 right-4 bg-background p-4 rounded-lg shadow-lg border">
-              <div className="flex items-center space-x-1">
-                <div className="animate-spin rounded-full h-3 w-4 border-2 border-primary border-t-transparent"></div>
-                <span>Uploading file...</span>
-              </div>
-            </div>
-          )}
-
-          {uploadError && (
-            <div className="absolute bottom-3 right-4 bg-destructive text-destructive-foreground p-4 rounded-lg shadow-lg">
-              <div className="flex items-center space-x-1">
-                <span>Upload failed: {uploadError}</span>
-                <button
-                  onClick={() => setUploadError(null)}
-                  className="text-sm underline hover:no-underline"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </Sidebar>
-    </>
+    </DndProvider>
   );
 }
