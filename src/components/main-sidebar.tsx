@@ -407,7 +407,7 @@ export default function MainSidebar() {
                     <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
                       <DropdownMenuItem asChild>
                         <Link href="/v3/profile">
-                          <User3 className="h-[1.2rem] w-[1.2rem]" />
+                          <User className="h-[1.2rem] w-[1.2rem]" />
                           <span>{t('navigation.profile')}</span>
                         </Link>
                       </DropdownMenuItem>
