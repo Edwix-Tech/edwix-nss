@@ -25,3 +25,24 @@ export async function uploadFileWithAiSource({
 
   return filePath;
 }
+export async function getCurrentUserUploadLimit({
+  userId,
+  fileSize,
+  nbAiExtractions,
+}: {
+  userId: string;
+  fileSize: number;
+  nbAiExtractions: number;
+}) {
+  const { data, error } = await supabaseClient.rpc('checkIfNewFileWillReachQuotas', {
+    userid: userId,
+    newfilesize: fileSize,
+    nbaiextraction: nbAiExtractions,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
