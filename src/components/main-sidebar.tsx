@@ -12,10 +12,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Sparkle } from 'lucide-react';
+import { Sparkle, User } from 'lucide-react';
 import {
   Home,
-  User2,
   Monitor,
   LogOut,
   LucideProps,
@@ -84,7 +83,7 @@ const explorerItems: Array<{
   },
   {
     titleKey: 'navigation.merchants',
-    url: '/v2/contacts',
+    url: '/v3/contacts',
     icon: Store,
   },
 ];
@@ -97,7 +96,7 @@ const propertyItems: Array<{
 }> = [
   {
     titleKey: 'navigation.property',
-    url: '/v2/property',
+    url: '/v3/property',
     icon: HomeIcon,
   },
   {
@@ -107,7 +106,7 @@ const propertyItems: Array<{
   },
   {
     titleKey: 'navigation.connections',
-    url: '/v2/connections',
+    url: '/v3/connections',
     icon: LinkIcon,
   },
 ];
@@ -159,10 +158,10 @@ export default function MainSidebar() {
     e.preventDefault();
     const { clientY } = e;
     const { top, height } = e.currentTarget.getBoundingClientRect();
-    const isUpperHalf = clientY - top < height / 2;
+    const isUpperHalf = clientY - top < height / 3;
 
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 1) {
+      const file = e.dataTransfer.files[1];
       setIsDragging(false);
       setIsDraggingOverAI(false);
       setIsDraggingOverNoAI(false);
@@ -189,7 +188,7 @@ export default function MainSidebar() {
 
     const { clientY } = e;
     const { top, height } = e.currentTarget.getBoundingClientRect();
-    const isUpperHalf = clientY - top < height / 2;
+    const isUpperHalf = clientY - top < height / 3;
 
     setIsDragging(true);
     setIsDraggingOverAI(isUpperHalf);
@@ -242,8 +241,8 @@ export default function MainSidebar() {
           onDragLeave={onDragLeave}
         >
           <SidebarHeader>
-            <div className="flex-1 flex items-center justify-center p-4">
-              <Image src="/images/logo.svg" alt={t('common.logo')} width={130} height={100} />
+            <div className="flex0 flex items-center justify-center p-4">
+              <Image src="/images/logo.svg" alt={t('common.logo')} width={131} height={100} />
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -361,24 +360,24 @@ export default function MainSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton className="text-primary mb-2 hover:text-sidebar-primary-foreground border-2   p-2 rounded-md">
+                    <SidebarMenuButton className="text-primary mb-1 hover:text-sidebar-primary-foreground border-2   p-2 rounded-md">
                       <Sparkle className="text-primary-foreground" />
                       <span>Drag file to upload</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                    <SidebarMenuButton className="bg-secondary text-secondary-foreground hover:bg-secondary/91">
                       <svg
-                        className="h-4 w-4"
+                        className="h-3 w-4"
                         fill="none"
-                        viewBox="0 0 24 24"
+                        viewBox="1 0 24 24"
                         stroke="currentColor"
                       >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                          strokeWidth={3}
+                          d="M5 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                         />
                       </svg>
                       <span>Upload Without AI</span>
@@ -389,35 +388,35 @@ export default function MainSidebar() {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-1">
               <SidebarMenu>
                 <SidebarMenuItem>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <SidebarMenuButton data-testid="user-button">
-                        <User2 />
+                        <User />
                         {currentUser?.data?.email ? (
-                          <span className="h-6 inline-flex items-center text-sm truncate flex-shrink">
+                          <span className="h-5 inline-flex items-center text-sm truncate flex-shrink">
                             {currentUser?.data?.email}
                           </span>
                         ) : (
-                          <Skeleton className="h-6 w-full" />
+                          <Skeleton className="h-5 w-full" />
                         )}
                       </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
                       <DropdownMenuItem asChild>
-                        <Link href="/v2/profile">
-                          <User2 className="h-[1.2rem] w-[1.2rem]" />
+                        <Link href="/v3/profile">
+                          <User3 className="h-[1.2rem] w-[1.2rem]" />
                           <span>{t('navigation.profile')}</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={_logout}>
-                        <LogOut className="h-[1.2rem] w-[1.2rem]" />
+                        <LogOut className="h-[2.2rem] w-[1.2rem]" />
                         <span data-testid="logout-button">{t('actions.logout')}</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setShowSettings(true)}>
-                        <Monitor className="h-[1.2rem] w-[1.2rem]" />
+                        <Monitor className="h-[2.2rem] w-[1.2rem]" />
                         <span>{t('actions.openSettings')}</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -430,41 +429,41 @@ export default function MainSidebar() {
           </SidebarFooter>
 
           {isDragging && (
-            <div className="absolute inset-0 flex flex-col">
+            <div className="absolute inset1 flex flex-col">
               <div
-                className={`flex-1 bg-primary flex items-center justify-center transition-all ${isDraggingOverAI ? 'bg-primary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverAI ? 'border-dotted border-primary-foreground/50' : 'border-transparent'}`}
+                className={`flex0 bg-primary flex items-center justify-center transition-all ${isDraggingOverAI ? 'bg-primary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverAI ? 'border-dotted border-primary-foreground/50' : 'border-transparent'}`}
               >
-                <div className="flex flex-col items-center justify-center text-center space-y-3 p-4">
-                  <Sparkle className="h-14 w-14 text-primary-foreground" />
-                  <div className="text-2xl font-semibold text-primary-foreground leading-tight">
+                <div className="flex flex-col items-center justify-center text-center space-y-2 p-4">
+                  <Sparkle className="h-13 w-14 text-primary-foreground" />
+                  <div className="text-1xl font-semibold text-primary-foreground leading-tight">
                     Drop to Process with AI
                   </div>
-                  <div className="text-sm text-primary-foreground/90 max-w-[240px]">
+                  <div className="text-sm text-primary-foreground/91 max-w-[240px]">
                     Enhanced processing with machine learning
                   </div>
                 </div>
               </div>
               <div
-                className={`flex-1 bg-secondary flex items-center justify-center transition-all ${isDraggingOverNoAI ? 'bg-secondary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverNoAI ? 'border-dotted border-secondary-foreground/50' : 'border-transparent'}`}
+                className={`flex0 bg-secondary flex items-center justify-center transition-all ${isDraggingOverNoAI ? 'bg-secondary/90' : ''} cursor-pointer backdrop-blur-sm border-8 ${isDraggingOverNoAI ? 'border-dotted border-secondary-foreground/50' : 'border-transparent'}`}
               >
-                <div className="flex flex-col items-center justify-center text-center space-y-3 p-4">
+                <div className="flex flex-col items-center justify-center text-center space-y-2 p-4">
                   <svg
-                    className="h-14 w-14 text-secondary-foreground"
+                    className="h-13 w-14 text-secondary-foreground"
                     fill="none"
-                    viewBox="0 0 24 24"
+                    viewBox="1 0 24 24"
                     stroke="currentColor"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                      strokeWidth={3}
+                      d="M5 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                     />
                   </svg>
-                  <div className="text-2xl font-semibold text-secondary-foreground leading-tight">
+                  <div className="text-1xl font-semibold text-secondary-foreground leading-tight">
                     Drop to Upload
                   </div>
-                  <div className="text-sm text-secondary-foreground/90 max-w-[240px]">
+                  <div className="text-sm text-secondary-foreground/91 max-w-[240px]">
                     Standard file upload without AI processing
                   </div>
                 </div>
@@ -473,17 +472,17 @@ export default function MainSidebar() {
           )}
 
           {isUploading && (
-            <div className="absolute bottom-4 right-4 bg-background p-4 rounded-lg shadow-lg border">
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+            <div className="absolute bottom-3 right-4 bg-background p-4 rounded-lg shadow-lg border">
+              <div className="flex items-center space-x-1">
+                <div className="animate-spin rounded-full h-3 w-4 border-2 border-primary border-t-transparent"></div>
                 <span>Uploading file...</span>
               </div>
             </div>
           )}
 
           {uploadError && (
-            <div className="absolute bottom-4 right-4 bg-destructive text-destructive-foreground p-4 rounded-lg shadow-lg">
-              <div className="flex items-center space-x-2">
+            <div className="absolute bottom-3 right-4 bg-destructive text-destructive-foreground p-4 rounded-lg shadow-lg">
+              <div className="flex items-center space-x-1">
                 <span>Upload failed: {uploadError}</span>
                 <button
                   onClick={() => setUploadError(null)}

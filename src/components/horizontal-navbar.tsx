@@ -1,16 +1,8 @@
 'use client';
 import {
-  FileText,
   Plus,
-  Search,
   Home,
   User,
-  LayoutDashboard,
-  Wand2,
-  Users,
-  CheckSquare,
-  Calendar,
-  DollarSign,
   Bell,
   LogOut,
   Link as LinkIcon,
@@ -18,7 +10,6 @@ import {
   CreditCard,
   HelpCircle,
   MessageSquare,
-  Sidebar,
 } from 'lucide-react';
 import supabaseClient from '@/lib/supabase-client';
 import { useCurrentProperty } from '@/hooks/use-current-property';
@@ -47,7 +38,7 @@ import { useTheme } from 'next-themes';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { getMemberships } from '@/lib/api/property';
 import { EdwixButton } from './edwix-button';
-import { GetAdsByPartnerId, useGetAdsByPartnerId, Ad } from '@/lib/api/ads';
+import { useGetAdsByPartnerId, Ad } from '@/lib/api/ads';
 interface MenuItem {
   value: string;
   label: string;
@@ -76,68 +67,6 @@ const LogoSection = () => {
         height={32}
       />
     </Link>
-  );
-};
-
-const MainMenuSelect = ({
-  theme,
-  menuItems,
-}: {
-  theme: string | undefined;
-  menuItems: MenuItem[];
-}) => {
-  return (
-    <div className="w-48">
-      <Select defaultValue="drive">
-        <SelectTrigger
-          className={`w-[180px]  justify-start rounded-full ${
-            theme === 'dark' ? 'bg-gray-800 text-white' : ''
-          }`}
-        >
-          <SelectValue placeholder="Drive" />
-        </SelectTrigger>
-
-        <SelectContent className={theme === 'dark' ? 'bg-gray-800 text-white' : ''}>
-          <SelectGroup>
-            <SelectLabel>Links</SelectLabel>
-            {menuItems.map((item: MenuItem) => (
-              <SelectItem key={item.value} value={item.value}>
-                <div className="flex items-center">
-                  <item.icon className="mr-2 h-4 w-4 text-inherit" />
-                  {item.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-};
-
-const AddButton = ({ theme }: { theme: string | undefined }) => {
-  return (
-    <button className="bg-[#2CAACE] text-black border-2 border-black rounded-full font-semibold justify-center filter drop-shadow-[-4px_4px_0px_rgba(0,0,0,1)] text-sm py-1 px-3 h-8 flex items-center">
-      <span
-        className="bg-black rounded-full p-1 mr-2 flex items-center justify-center"
-        style={{ width: '20px', height: '20px' }}
-      >
-        <Plus className={`h-3 w-3 ${theme === 'dark' ? 'text-white' : 'text-black'}`} />
-      </span>
-      Add...
-    </button>
-  );
-};
-
-const SearchButton = ({ theme }: { theme: string | undefined }) => {
-  return (
-    <button
-      className={`inline-flex items-center justify-center rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent h-10 w-10 ${
-        theme === 'dark' ? 'text-white hover:text-gray-300' : 'text-black hover:text-gray-700'
-      }`}
-    >
-      <Search className="h-5 w-5 text-inherit" />
-    </button>
   );
 };
 
@@ -222,6 +151,7 @@ const PropertySelect = ({ theme }: { theme: string | undefined }) => {
     </Select>
   );
 };
+
 const NotificationsSelect = ({ theme }: { theme: string | undefined }) => {
   return (
     <DropdownMenu>
@@ -360,15 +290,6 @@ const UserMenuSelect = ({
 };
 
 const Navbar = () => {
-  const menuItems = [
-    { value: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { value: 'extractor', label: 'Extractor', icon: Wand2 },
-    { value: 'drive', label: 'Drive', icon: FileText },
-    { value: 'contacts', label: 'Contacts', icon: Users },
-    { value: 'todos', label: 'Todos', icon: CheckSquare },
-    { value: 'calendar', label: 'Calendar', icon: Calendar },
-    { value: 'finance', label: 'Finance', icon: DollarSign },
-  ];
   const user = useCurrentUser();
   const ads = useGetAdsByPartnerId(user.data?.partner_id);
   let sidebarAd: Ad | undefined = undefined;
@@ -402,7 +323,6 @@ const Navbar = () => {
   };
 
   const { theme } = useTheme();
-  console.log(theme);
   return (
     <div className="  z-50 top-0 w-full sticky">
       <nav className={` w-full bg-sidebar`}>
@@ -422,8 +342,6 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* <MainMenuSelect theme={theme} menuItems={menuItems} /> */}
-
           <div className="flex-grow"></div>
           <div className="flex items-center space-x-4">
             <EdwixButton className=" w-fit bg-[#2caace] hover:bg-[#157FC2] transition">
@@ -434,8 +352,6 @@ const Navbar = () => {
                 </span>
               </span>
             </EdwixButton>
-
-            {/* <SearchButton theme={theme} /> */}
 
             <PropertySelect theme={theme} />
             <NotificationsSelect theme={theme} />
