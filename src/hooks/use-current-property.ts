@@ -8,7 +8,7 @@ export interface Property {
 
 const PROPERTY_COOKIE_KEY = 'current-property';
 
-interface PropertyState {
+export interface PropertyState {
   currentProperty: Property | null;
   setCurrentProperty: (property: Property | null) => void;
 }
