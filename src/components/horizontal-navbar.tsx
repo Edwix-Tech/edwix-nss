@@ -1,23 +1,18 @@
-'use client';
 import {
   Plus,
   Home,
   User,
-  Bell,
-  LayoutDashboard,
-  Wand2,
-  Users,
-  CheckSquare,
-  Calendar,
-  DollarSign,
   LogOut,
+  Wand2,
   Link as LinkIcon,
   Mail,
   CreditCard,
   HelpCircle,
   MessageSquare,
 } from 'lucide-react';
+import * as React from 'react';
 import supabaseClient from '@/lib/supabase-client';
+import { uploadFileWithAiSource, getCurrentUserUploadLimit } from '@/lib/api/upload-file';
 import { useCurrentProperty } from '@/hooks/use-current-property';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -44,8 +39,8 @@ import { useTheme } from 'next-themes';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { NotificationsSelect } from './notifcation-select';
 import { getMemberships } from '@/lib/api/property';
-import { EdwixButton } from './edwix-button';
 import { useGetAdsByPartnerId, Ad } from '@/lib/api/ads';
+
 interface MenuItem {
   value: string;
   label: string;
@@ -238,24 +233,20 @@ const UserMenuSelect = ({
 
 const Navbar = () => {
   const user = useCurrentUser();
-  const ads = useGetAdsByPartnerId(user.data?.partner_id);
-  let sidebarAd: Ad | undefined = undefined;
-  if (!ads.isPending && ads.data) {
-    const lang = navigator.language.startsWith('fr') ? 'fr' : 'en';
-    console.log('Lang:', lang);
-    for (let i = 0; i < ads.data.length; i++) {
-      if (ads.data[i].placement === 'SIDEBAR') {
-        if (ads.data[i][`image_url_${lang}`] || ads.data[i].image_url) {
-          sidebarAd = {
-            ...ads.data[i],
-            image_url: ads.data[i][`image_url_${lang}`] || ads.data[i].image_url,
-            href: ads.data[i][`href_${lang}`] || ads.data[i].href,
-          };
-          break;
-        }
-      }
-    }
-  }
+
+  const { data: quotaData } = useQuery({
+    queryKey: ['userQuotas'],
+    queryFn: async () => {
+      const fileSize = 0;
+      const nbAiExtractions = 1;
+      return getCurrentUserUploadLimit({
+        userId: user?.data?.id || '',
+        fileSize,
+        nbAiExtractions,
+      });
+    },
+    enabled: !!user?.data?.id,
+  });
 
   const userMenuItems = {
     profile: {
@@ -278,40 +269,109 @@ const Navbar = () => {
   };
 
   const { theme } = useTheme();
+  const property = useCurrentProperty();
+
+  const handleFileUpload = async (files: FileList | null, withAi: boolean) => {
+    try {
+      if (!files || files.length === 0) {
+        throw new Error('No file selected');
+      }
+      const file = files[0];
+
+      if (!file) {
+        throw new Error('Invalid file');
+      }
+
+      await uploadFileWithAiSource({
+        file: file,
+        aiSource: withAi,
+        currentProperty: property,
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
   return (
-    <div className="  z-50 top-0 w-full sticky">
-      <nav className={` w-full bg-sidebar`}>
+    <div className="z-50 top-0 w-full sticky">
+      <nav className={`w-full bg-sidebar`}>
         <div className="px-8 h-16 flex items-center">
           <LogoSection />
-          {sidebarAd && (
-            <div className="relative h-8 w-32">
-              <Link href={sidebarAd.href} target="_blank" rel="noopener noreferrer nofollow">
-                <Image
-                  src={sidebarAd.image_url as string}
-                  width={300}
-                  height={300}
-                  alt="Sidebar Advertisement"
-                  className=" h-8 w-12"
-                />
-              </Link>
-            </div>
-          )}
-
-          {/* <MainMenuSelect theme={theme} menuItems={menuItems} /> */}
 
           <div className="flex-grow"></div>
           <div className="flex items-center space-x-4">
-            <EdwixButton className=" w-fit bg-[#2caace] hover:bg-[#157FC2] transition">
-              <span className="flex items-center font-semibold">
-                UPLOAD DOCUMENT
-                <span className="ml-2 bg-black rounded-full w-6 h-6 flex items-center justify-center">
-                  <Plus className="h-6 w-6 text-white" />
-                </span>
-              </span>
-            </EdwixButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex justify-center border-black items-center w-fit max-w-full h-fit px-6 py-2 bg-[#2CAACE] border rounded-full cursor-pointer shadow-[-5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-none transition-shadow duration-300 self-start">
+                  <span className="flex items-center font-semibold dark:text-black text-white">
+                    UPLOAD DOCUMENT
+                    <span className="ml-2 bg-black rounded-full w-6 h-6 flex items-center justify-center">
+                      <Plus className="h-6 w-6 text-white" />
+                    </span>
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} -p-1 border-2 border-black rounded-xl shadow-[-5px_5px_0px_0px_rgba(0,0,0,1)]`}
+                align="end"
+              >
+                <DropdownMenuItem
+                  className={`flex items-center cursor-pointer py-4 ${!quotaData ? 'hover:bg-[#28A0C2] focus:bg-[#28A0C2]' : 'opacity-50 cursor-not-allowed'}`}
+                  onClick={() => {
+                    if (quotaData) return;
 
-            {/* <SearchButton theme={theme} /> */}
-
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = '.pdf,.doc,.docx';
+                    fileInput.onchange = e => {
+                      const files = (e.target as HTMLInputElement).files;
+                      if (files && files.length > 0) {
+                        handleFileUpload(files, true);
+                      }
+                    };
+                    fileInput.click();
+                  }}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-black rounded-full p-2">
+                      <Wand2 className="h-4 w-4 text-white" />
+                    </div>
+                    <span
+                      className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'}`}
+                    >
+                      Upload with AI {quotaData && '(Quota Reached)'}
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center cursor-pointer py-4 hover:bg-[#28A0C2] focus:bg-[#28A0C2]"
+                  onClick={() => {
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = '.pdf,.doc,.docx';
+                    fileInput.onchange = e => {
+                      const files = (e.target as HTMLInputElement).files;
+                      if (files && files.length > 0) {
+                        handleFileUpload(files, false);
+                      }
+                    };
+                    fileInput.click();
+                  }}
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-black rounded-full p-2">
+                      <Plus className="h-4 w-4 text-white" />
+                    </div>
+                    <span
+                      className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-black'}`}
+                    >
+                      Upload without AI
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <PropertySelect theme={theme} />
             <NotificationsSelect theme={theme} />
             <UserMenuSelect theme={theme} userMenuItems={userMenuItems} />
