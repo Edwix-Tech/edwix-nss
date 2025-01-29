@@ -1,15 +1,8 @@
 'use client';
 import {
-  FileText,
   Plus,
   Home,
   User,
-  LayoutDashboard,
-  Wand2,
-  Users,
-  CheckSquare,
-  Calendar,
-  DollarSign,
   Bell,
   LogOut,
   Link as LinkIcon,
