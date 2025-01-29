@@ -3,10 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 export interface Ad {
   created_at: string;
   partner_id: string;
+  image_url_fr?: string;
+  image_url_en?: string;
   image_url: string;
   placement: 'SIDEBAR' | 'DASHBOARD';
   id: string;
   href: string;
+  href_en?: string;
+  href_fr?: string;
+
   created_by: string | null;
 }
 export async function GetAdsByPartnerId(partnerId: string | undefined | null): Promise<Ad[]> {
