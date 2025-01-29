@@ -1,14 +1,30 @@
-import supabaseClient from "@/lib/supabase-client";
-import { useQuery } from "@tanstack/react-query";
+import supabaseClient from '@/lib/supabase-client';
+import { useQuery } from '@tanstack/react-query';
 
 export function useCurrentUser() {
-    const queryFn = async () => {
-        const { data } = await supabaseClient.auth.getUser();
-        return data.user;
-    };
+  const queryFn = async () => {
+    const { data } = await supabaseClient.auth.getUser();
+    if (!data.user?.id) throw new Error('User not found');
 
-    return useQuery({
-        queryKey: ["currentUser"],
-        queryFn,
-    });
+    const { data: userData, error } = await supabaseClient
+      .from('User')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+    if (error) throw error;
+    if (!userData) throw new Error('User data not found');
+    return {
+      ...data.user,
+      partner_id: userData.partner_id,
+      profile: {
+        firstname: userData.firstname,
+        lastname: userData.lastname,
+      },
+    };
+  };
+
+  return useQuery({
+    queryKey: ['currentUser'],
+    queryFn,
+  });
 }
