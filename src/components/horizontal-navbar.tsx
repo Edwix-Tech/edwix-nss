@@ -4,6 +4,12 @@ import {
   Home,
   User,
   Bell,
+  LayoutDashboard,
+  Wand2,
+  Users,
+  CheckSquare,
+  Calendar,
+  DollarSign,
   LogOut,
   Link as LinkIcon,
   Mail,
@@ -36,6 +42,7 @@ import {
 } from '@/components/ui/select';
 import { useTheme } from 'next-themes';
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { NotificationsSelect } from './notifcation-select';
 import { getMemberships } from '@/lib/api/property';
 import { EdwixButton } from './edwix-button';
 import { useGetAdsByPartnerId, Ad } from '@/lib/api/ads';
@@ -149,65 +156,6 @@ const PropertySelect = ({ theme }: { theme: string | undefined }) => {
         <SelectItem value="new">Add New Property</SelectItem>
       </SelectContent>
     </Select>
-  );
-};
-const NotificationsSelect = ({ theme }: { theme: string | undefined }) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className={`flex items-center justify-center text-sm font-medium w-10 relative rounded-full p-1 ${
-          theme === 'dark' ? 'bg-gray-800 text-white ' : 'text-gray-700 border '
-        }`}
-      >
-        <Bell className="h-6 w-6  dark:text-white text-gray-800" />
-        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full bg-red-500 text-xs text-white font-medium bg-red ring-red dark:ring-gray-800">
-          2
-        </span>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent className={`w-72 ${theme === 'dark' ? 'bg-gray-800 text-white' : ''}`}>
-        <div className="px-2 py-1.5">
-          <h4 className="text-sm font-semibold">New Notifications</h4>
-        </div>
-        <DropdownMenuItem>
-          <div className="flex items-center">
-            <Bell className="mr-2 h-4 w-4 text-red-500" />
-            <div>
-              <p className="text-sm">New message from John</p>
-              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                2 minutes ago
-              </p>
-            </div>
-          </div>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <div className="flex items-center">
-            <Bell className="mr-2 h-4 w-4 text-red-500" />
-            <div>
-              <p className="text-sm">Document shared by Sarah</p>
-              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                1 hour ago
-              </p>
-            </div>
-          </div>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <div className="px-2 py-1.5">
-          <h4 className="text-sm font-semibold">Read</h4>
-        </div>
-        <DropdownMenuItem>
-          <div className="flex items-center">
-            <Bell className="mr-2 h-4 w-4 text-gray-400" />
-            <div>
-              <p className="text-sm">Task completed</p>
-              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                Yesterday
-              </p>
-            </div>
-          </div>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 };
 
@@ -330,7 +278,6 @@ const Navbar = () => {
   };
 
   const { theme } = useTheme();
-  console.log(theme);
   return (
     <div className="  z-50 top-0 w-full sticky">
       <nav className={` w-full bg-sidebar`}>
