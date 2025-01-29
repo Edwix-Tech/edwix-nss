@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
 import supabaseClient from '@/lib/supabase-client';
 import { useCurrentUser } from '@/hooks/use-current-user';
@@ -7,17 +6,30 @@ import {
   useInfiniteNotificationsQuery,
   useNewNotificationsCountQuery,
 } from '@/lib/api/notification';
+import { useEffect, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+
+type Notification = {
+  id: string;
+  user_id: string;
+  created_at: string;
+  file_id?: string;
+  property_id?: string;
+  due_date_id?: string;
+  file?: {
+    title: string;
+  };
+};
+
 //fix router
 export const NotificationsSelect = ({ theme }: { theme: string | undefined }) => {
   const user = useCurrentUser();
   const [realTimeCount, setRealTimeCount] = useState(0);
-  const [realTimeNotifications, setRealTimeNotifications] = useState<any[]>([]);
+  const [realTimeNotifications, setRealTimeNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<'new' | 'read'>('new');
   const mutateNotif = useUpdateNotificationStatus();
 
@@ -58,7 +70,7 @@ export const NotificationsSelect = ({ theme }: { theme: string | undefined }) =>
           table: 'Notification',
           filter: `user_id=eq.${user.data.id}`,
         },
-        payload => {
+        (payload: { new: Notification }) => {
           setRealTimeCount(current => current + 1);
           setRealTimeNotifications(current => [payload.new, ...current]);
         }
@@ -130,23 +142,24 @@ export const NotificationsSelect = ({ theme }: { theme: string | undefined }) =>
             <>
               {(activeTab === 'new' ? newNotifications : readNotifications).map(
                 (notification, index) => (
-                  <DropdownMenuItem
+                  <a
                     key={`${notification.id}-${index}`}
                     onClick={() => {
+                      console.log('clicked', notification);
                       if (activeTab === 'new') {
-                        mutateNotif.mutate({
-                          notificationId: notification.id,
-                          status: 'Read',
-                        });
-                      }
-                      if (notification.file_id) {
-                        //router.push(`/my-documents/${notification.file_id}`);
-                      } else if (notification.property_id) {
-                        //router.push(`/properties/${notification.property_id}`);
-                      } else if (notification.due_date_id) {
-                        //router.push(`/calendar/${notification.due_date_id}`);
+                        mutateNotif.mutate({ notificationId: notification.id, status: 'Read' });
                       }
                     }}
+                    href={
+                      notification.file_id
+                        ? `/my-documents/${notification.file_id}`
+                        : notification.property_id
+                          ? `/properties/${notification.property_id}`
+                          : notification.due_date_id
+                            ? `/calendar/${notification.due_date_id}`
+                            : '/notifications' + (activeTab === 'new' ? `/${notification.id}` : '')
+                    }
+                    className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                   >
                     <div className="flex items-center">
                       <Bell
@@ -165,7 +178,7 @@ export const NotificationsSelect = ({ theme }: { theme: string | undefined }) =>
                         </p>
                       </div>
                     </div>
-                  </DropdownMenuItem>
+                  </a>
                 )
               )}
               {((activeTab === 'new' && isFetchingNextNewPage) ||

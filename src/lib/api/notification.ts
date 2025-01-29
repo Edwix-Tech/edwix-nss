@@ -91,7 +91,6 @@ export function useNotificationsQuery(userId: string) {
 }
 
 export async function updateNotificationStatus(notificationId: string, status: 'New' | 'Read') {
-  console.log('hug');
   const { error } = await supabaseClient
     .from('Notification')
     .update({ status })

@@ -35,7 +35,6 @@ export async function GetAdsByPartnerId(partnerId: string | undefined | null): P
     );
 
     const data = await response.json();
-    console.log('Ads:', data);
     return data;
   } catch (error) {
     console.error('Error fetching ads:', error);
